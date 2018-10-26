@@ -1,3 +1,11 @@
+function create_user_minimus() {
+  if ! grep minimus /etc/passwd > /dev/null; then
+    echo creating user minimus
+    useradd -u 5000 -g vcap minimus
+  fi
+}
+
+
 # copied from https://github.com/concourse/concourse/blob/f4b40a18b94ed816cea7dfba20ad365bb566483b/jobs/baggageclaim/templates/baggageclaim_ctl.erb#L23-L54
 # # break out of bosh-lite device limitations
 function permit_device_control() {

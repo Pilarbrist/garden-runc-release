@@ -26,11 +26,15 @@ increase_max_procs
 <% if p("garden.apparmor_profile") == "garden-default" %>
   load_apparmor_profile "$GARDEN_CONFIG_DIR"/garden-default
 <% end %>
+<% if p("garden.experimental_rootless_mode") %>
+  create_user_minimus
+<% end %>
 log "preparing system: done"
 
 log "running greenskeeper"
 greenskeeper_cmd="/var/vcap/packages/greenskeeper/bin/greenskeeper"
 <% if p("garden.experimental_rootless_mode") %>
+  # TODO modify greenskeeper
   greenskeeper_cmd="$greenskeeper_cmd --rootless"
 <% end %>
 $greenskeeper_cmd
@@ -55,15 +59,16 @@ id_map_start=1
 
 <% if p("garden.experimental_rootless_mode") %>
   <% if p("garden.listen_network") == "tcp" %>
-    exec_command="exec execas --uid $MAXIMUS --gid $MAXIMUS"
+    exec_command="exec execas --uid $MINIMUS_UID --gid $MINIMUS_GID"
   <% else %>
-    exec_command="exec socket2me --socket-path <%= p("garden.listen_address") %> --uid $MAXIMUS --gid $MAXIMUS --socket-uid 1000 --socket-gid 1000"
+    exec_command="exec socket2me --socket-path <%= p("garden.listen_address") %> --uid $MINIMUS_UID --gid $MINIMUS_GID --socket-uid 1000 --socket-gid 1000"
   <% end %>
-  setup_cmd="$setup_cmd --rootless-uid $MAXIMUS --rootless-gid $MAXIMUS"
+  setup_cmd="$setup_cmd --rootless-uid $MINIMUS_UID --rootless-gid $MINIMUS_GID"
   id_map_start=65536
 
   cp "$GARDEN_CONFIG_DIR/grootfs_config.yml" "$GARDEN_CONFIG_DIR/config.ini" "$GARDEN_ROOTLESS_CONFIG_DIR"
-  chown "$MAXIMUS:$MAXIMUS" "$GARDEN_ROOTLESS_CONFIG_DIR/grootfs_config.yml" "$GARDEN_ROOTLESS_CONFIG_DIR/config.ini"
+  chown "$MAXIMUS:$MAXIMUS" "$GARDEN_ROOTLESS_CONFIG_DIR/grootfs_config.yml"
+  chown "$MINIMUS_UID:$MINIMUS_GID" "$GARDEN_ROOTLESS_CONFIG_DIR/config.ini"
 
 <% end %>
 
